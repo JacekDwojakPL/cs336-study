@@ -8,8 +8,8 @@ author: jacek
 Hello! Here I will post some notes to document my progress (if any) during self-study of CS336: Language Modeling from Scratch. While these noted are shared in the form of this blog,
 please be aware that I am not taking any responsibility if you use anything you find here. This space is for me mostly to keep my thoughts organized and document the process of learning. If you find anything useful here - great!
 
-#### Jekyll
-The idea of blog like this I took from Jeremy Howard and book [Practical Deep Learning For Coders](https://course.fast.ai/) where he recommends to do something like this. Then I decided that I will use Jekyll to develop and render posts since it provides nice framework with uncomplicated pipeline. But of course from the start I stumbeld upon problems with package managers, versioning, persimssions etc. But I got everyting to work. So first advice you can take from here: if you find errors regarding write permissions during run of `bundle install`, eg. something like: 
+#### Write about learning
+The idea of document learning process this I took from Jeremy Howard and book [Practical Deep Learning For Coders](https://course.fast.ai/) where he recommends to do something like that. Since this is some personal space my sincere recommendation is not to use and be inspired by anything you will read here. GitHub Pages allows to host blog from the repository so I decided that I will use Jekyll since it provides nice framework with uncomplicated pipeline and has default GH integration. Of course from the start I stumbeld upon problems with package managers, versioning, persimssions etc. So first advice you can take from here: if you find errors regarding write permissions during run of `bundle install`, eg. something like: 
 
 ```shell
 Bundler::PermissionError: There was an error while trying to write to

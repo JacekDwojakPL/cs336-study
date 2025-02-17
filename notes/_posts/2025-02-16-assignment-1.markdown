@@ -6,7 +6,8 @@ categories: assignment1
 author: jacek
 ---
 So first part of first assignment asks the student to implement and train BPE Tokenizer. I will not describe how BPE algorithm works since there are much better sources - especially Karpathy's [Let's build the GPT tokenizer](https://www.youtube.com/watch?v=zduSFxRajkE) video. Example of BPE in the first lecture is based on his approach. However main outline of training such tokenizer is as follows:
-- Initialize starting vocabulary of length 256 - since one byte can have 255 values initial vocabulary will have index for each value.
+
+- Initialize starting vocabulary of length 256 - since one byte can have 256 values in range 0-255. Initial vocabulary will index each value.
 ```python
 def initialize_vocab():
     # bytes(x) function converts an integer into raw byte string which can be later decoded to unicode
@@ -20,7 +21,7 @@ def initialize_vocab():
 indices = list(string.encode())
 ```
 
-Written part of the assignment asks question about identifying bug in function which converts individual bytes into chars. When iterating over raw bytes an error can occur since sometimes unicode character is composed of series of bytes and single byte can't be converted into string.
+Written part of the assignment asks question about finding bug in function which converts individual bytes into chars. During iteration over raw bytes an error can occur since unicode characters are often composed of series of bytes and only whore series can be converted into string.
 
 - Then for given number of merges which roughly equals to the target vocabulary size:
     - Iterate over whole dataset and find most frequent pair of bytes.
@@ -29,7 +30,7 @@ Written part of the assignment asks question about identifying bug in function w
     # most_frequent_pair is a tuple of two bytes
     vocab[new_index] = vocab[most_frequent_pair[0]]+vocab[most_frequent_pair[1]]
     ```
-    - `vocab[new_index]` points to the newly merged pair (which is a byte string) so when tokenizer will encounter two bytes of frequent pairs from training during tokenization, instead of returning two indices, will return one. With this method the length of tokenized string can be reduced (compressed) to fewer indices, and this has crucial impact on Transformer architecture and attention mechanisms - since this architecture has fixed context size which can he handled.
+    - `vocab[new_index]` points to the newly merged pair (which is a byte string) so when tokenizer will encounter two bytes of frequent pairs from training during tokenization, instead of returning two indices, tokenizer will return one index. With this method the length of tokenized string can be reduced (compressed) to fewer indices, and this has crucial impact on Transformer architecture and attention mechanisms - since this architecture has fixed context size which can he handled.
     - Iterate again over indices and replace each byte from most frequent pair with new index.
 
 From the above we can see that each merge makes two passes over entire dataset which maybe is tolerable for small datasets but the assignment requires students to train on 2GB and 12GB text files. With target vocabulary size of 10000 using approach described above we would train for three months on the TinyStories-GPT4-train.txt file. For reference, here are constraints given by instructors:
