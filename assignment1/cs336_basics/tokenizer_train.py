@@ -40,7 +40,7 @@ def merge_pretokens(pretoken, pair_to_merge):
 def process_chunk(line):
     return [tuple(pretoken) for pretoken in compiled_pattern.findall(line)]
 
-def read_file_multithreaded(file_path, num_threads=4, queue_size=100):
+def read_file_multithreaded(file_path, special_tokens=[], num_threads=4, queue_size=100):
     line_queue = queue.Queue(maxsize=queue_size)
     output_queue = queue.Queue()
     stop_signal = object()
@@ -53,12 +53,14 @@ def read_file_multithreaded(file_path, num_threads=4, queue_size=100):
             for _ in range(num_threads):
                 line_queue.put(stop_signal)
     
-    def consumer(output_queue):
+    def consumer(output_queue, special_tokens=[]):
         while True:
             line = line_queue.get()
             if line is stop_signal:
                 output_queue.put(stop_signal)
                 break
+            for token in special_tokens:
+                line = line.replace(token, "")
             counter.update(process_chunk(line))
             line_queue.task_done()
     
@@ -68,7 +70,7 @@ def read_file_multithreaded(file_path, num_threads=4, queue_size=100):
     worker_threads = []
     
     for _ in range(num_threads):
-        thread = threading.Thread(target=consumer, args=(output_queue,), daemon=True)
+        thread = threading.Thread(target=consumer, args=(output_queue,special_tokens), daemon=True)
         worker_threads.append(thread)
         thread.start()
     
@@ -86,7 +88,7 @@ def train(input_path, vocab_size, special_tokens=[]):
     merges = []
     new_index = len(vocab)
     num_merges = vocab_size - len(vocab)
-    pretokens_counts = read_file_multithreaded(input_path, 32, 100)
+    pretokens_counts = read_file_multithreaded(input_path=input_path, num_threads=32, queue_size=100, special_tokens=special_tokens)
     pretokens_pair_counts = Counter(pair for pretoken, count in pretokens_counts.items() for pair in split_pretoken_to_pairs(pretoken, count))
 
     for _ in tqdm(num_merges):
