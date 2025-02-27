@@ -16,11 +16,6 @@ def initialize_vocab(special_tokens=[]):
     
     return vocab
 
-def split_pretoken_to_pairs(pretoken, count):
-    for i in range(len(pretoken)-1):
-        for _ in range(count):
-            yield (pretoken[i], pretoken[i+1])
-
 def get_most_frequent_pair(pair, count):
     return count, pair
 
@@ -88,10 +83,13 @@ def train(input_path, vocab_size, special_tokens=[]):
     merges = []
     new_index = len(vocab)
     num_merges = vocab_size - len(vocab)
-    pretokens_counts = read_file_multithreaded(input_path=input_path, num_threads=32, queue_size=100, special_tokens=special_tokens)
-    pretokens_pair_counts = Counter(pair for pretoken, count in pretokens_counts.items() for pair in split_pretoken_to_pairs(pretoken, count))
-
-    for _ in tqdm(num_merges):
+    pretokens_counts = read_file_multithreaded(input_path, num_threads=32, queue_size=100, special_tokens=special_tokens)
+    pretokens_pair_counts = Counter()
+    for pretoken, count in pretokens_counts.items():
+        for i in range(len(pretoken)-1):
+            pretokens_pair_counts[(pretoken[i], pretoken[i+1])] += count
+        
+    for _ in tqdm(range(num_merges)):
         if not len(pretokens_pair_counts):
             break
         most_frequent_pair = max(pretokens_pair_counts.items(), key=lambda item: get_most_frequent_pair(item[0], item[1]))
@@ -102,12 +100,13 @@ def train(input_path, vocab_size, special_tokens=[]):
 
         for new_key, old_key in merged_pretokens:
             pretokens_counts[new_key] = pretokens_counts.pop(old_key)
+            new_count = pretokens_counts[new_key]
 
             old_pairs = [(old_key[i], old_key[i+1]) for i in range(len(old_key)-1)]
             new_pairs = [(new_key[i], new_key[i+1]) for i in range(len(new_key)-1)]
 
             for pair in old_pairs:
-                pretokens_pair_counts[pair] -= pretokens_counts[new_key]
+                pretokens_pair_counts[pair] -= new_count
             for pair in new_pairs:
-                pretokens_pair_counts[pair] += pretokens_counts[new_key]
+                pretokens_pair_counts[pair] += new_count
     return vocab, merges
