@@ -35,8 +35,8 @@ class BasicTokenizer:
         with open(merges_filepath, "r") as merges_file:
             for line in merges_file:
                 line = line.rstrip()
-                first, second = line.split(" ")
-                merges.append((eval(first), eval(second)))
+                match = re.match(r"(b[\"'].*?[\"'])\s(b[\"'].*?[\"']+)", line)
+                merges.append((eval(match.group(1)), eval(match.group(2))))
         return cls(vocab, merges, special_tokens)
 
     def encode(self, text):
