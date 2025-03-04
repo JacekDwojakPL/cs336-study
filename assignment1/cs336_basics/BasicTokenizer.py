@@ -5,7 +5,8 @@ class BasicTokenizer:
     def __init__(self, vocab, merges, special_tokens=None):
         self.vocab = vocab
         self.inverse_vocab = {word:idx for idx, word in self.vocab.items()}
-        self.merges = {pair:idx for idx, pair in enumerate(merges)}
+        self.merges = {pair:self.inverse_vocab[pair[0]+pair[1]] for pair in merges}
+        self.inverse_merges = {self.inverse_vocab[pair[0]+pair[1]]: pair for pair in merges}
         pattern = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
         self.special_tokens = None
         if special_tokens is not None:
@@ -49,26 +50,42 @@ class BasicTokenizer:
         else:
             pretokens = self.compiled_pattern.findall(text)
         indices = []
+        merges_set = set(self.merges.keys())
         for pretoken in pretokens:
             if self.special_tokens is not None and pretoken in self.special_tokens:
                 indices.append(self.inverse_vocab[pretoken.encode()])
                 continue
             pretoken_tuple = list(bytes([i]) for i in pretoken.encode()) # list of splitted bytes from encoded string
-         
             if len(pretoken_tuple) > 1:
-                for merge_pair in self.merges.keys():
-                    counter = 0
+                merging_finished = False
+                
+                while not merging_finished:
+                    merging_finished = True
                     new_pretoken = []
+                    counter = 0
+                    pairs = [pair for pair in zip(pretoken_tuple, pretoken_tuple[1:])]
+                    merge_candidates = [pair for pair in pairs if set([pair]).issubset(merges_set)]
+                    merge_pair_idx = min([self.merges[pair] for pair in merge_candidates],default=None)
+                    pair_to_merge = self.inverse_merges.get(merge_pair_idx, None)
+                    
                     while counter<len(pretoken_tuple):
-                        if counter+1<len(pretoken_tuple) and pretoken_tuple[counter] == merge_pair[0] and pretoken_tuple[counter+1] == merge_pair[1]:
-                            new_pretoken.append(merge_pair[0]+merge_pair[1])
+                        if (pair_to_merge and counter+1<len(pretoken_tuple) and 
+                            pretoken_tuple[counter] == pair_to_merge[0] and
+                            pretoken_tuple[counter+1] == pair_to_merge[1]):
+                            
+                            new_pretoken.append(self.vocab[merge_pair_idx])
+                            merging_finished = False
                             counter+=2
                         else:
                             new_pretoken.append(pretoken_tuple[counter])
                             counter+=1
-                    pretoken_tuple = new_pretoken
-                for idx in pretoken_tuple:
-                    indices.append(self.inverse_vocab[idx])
+
+                    if len(new_pretoken):
+                        pretoken_tuple = new_pretoken
+
+                for token in pretoken_tuple:
+                    indices.append(self.inverse_vocab[token])
+                                
             else:
                 encoded_pretoken = pretoken.encode()
                 if encoded_pretoken in self.inverse_vocab.keys():
