@@ -52,7 +52,36 @@ But if we choose to use Unicode code points directly in our tokenization, the vo
 
 #### Word level tokenization
 
-Instead of tokenize every character separately we can use tokenization based on whole words.
+Word level tokenization operates on whole words instead of single characters. This approach results in integer sequences of length equal to the number of words in source text. Naive approach to this would be to split source texts on whitespace character and create set of unique words found. Then we could create lookup table in which every word in set is mapped to integer. Tokenization process be an iteration over each word in the source text and looking up for index corresponding for given words:
+
+```python
+def create_vocabulary(text):
+    words = text.split(" ")
+    unique_words = list(sorted(set(words)))
+    vocabulary = {word:idx for idx,word in enumerate(unique_words)}
+    return vocabulary
+
+example_text = "this is example text to illustrate how word level text tokenizaion works"
+vocab = create_vocabulary(example_text)
+# vocab = {'example': 0, 'how': 1, 'illustrate': 2, 'is': 3, 'level': 4, 'text': 5, 'this': 6, 'to': 7, 'tokenizaion':'word': 9, 'works': 10}
+ids = [vocab[word] for word in example_text.split(" ")]
+# ids = [6, 3, 0, 5, 7, 2, 1, 9, 4, 5, 8, 10]
+```
+
+In above example vocabulary has 10 unique words and in the tokenized output we can see that index 5 appears twice - which corresponds to the word "text" in the source string.
+
+However this navie approach will not suffice to create proper vocabulary for production grade model. First of all, the vocabulary is limited to the words found in the source training data. It is impossible to tokenize word which didn't appear in the training data:
+
+```python
+vocab["Hello"] #KeyError: 'Hello'
+```
+
+There are ways to handle out-of-vocabulary words, for example, by substituting unknown words with a special token like `<UNK>`. A second issue with this approach is that, currently, the same words written with different cases (e.g., "Text" and "text") will have different indices, despite meaning the same thing. One way to handle this problem is to preprocess and normalize the source text before tokenization, such as converting it all to lowercase. However, this would cause us to lose some information that is also encoded in the casing. To summarize word level tokenization:
+
+- Resulting sequences have length equal to the number of words in the source text.
+- Vocabulary is limited only to the words found in source text.
+- There is need to handle words not found in the vocabulary.
+- Some preprocessing and text normalization is needed before tokenization, but this can lead to loosing some information encoded in the text.
 
 #### Sub-word Level tokenization
 
