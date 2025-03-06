@@ -15,4 +15,4 @@ This is a Stanford University course that guides students through the process of
 
 The first lecture serves as an introduction to the course and provides historical context, helping to build an understanding of the subject while introducing key vocabulary and terms. It then outlines the general framework for creating LLMs, covering everything from gathering raw text data to preparing it in a format that is digestible by a computer. A significant portion of the lecture focuses on explaining how Byte Pair Encoding (BPE) works, as building a BPE Tokenizer is part of the first assignment. The algorithm is presented with a simple example to help develop a deeper intuition. The lecture also discusses different approaches to text tokenization and addresses the question of why tokenization is necessary in the first place. It concludes with some administrative details for on-campus students.
 
-I’ve completed the first part of the first assignment—building the BPE Tokenizer—and I’ll share more on that next time.re next time.
+I’ve completed the first part of the first assignment—building the BPE Tokenizer—and I’ll share more on that next time.
