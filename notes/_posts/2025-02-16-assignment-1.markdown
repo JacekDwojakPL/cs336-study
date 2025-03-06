@@ -52,7 +52,7 @@ But if we choose to use Unicode code points directly in our tokenization, the vo
 
 #### Word level tokenization
 
-Word level tokenization operates on whole words instead of single characters. This approach results in integer sequences of length equal to the number of words in source text. Naive approach to this would be to split source texts on whitespace character and create set of unique words found. Then we could create lookup table in which every word in set is mapped to integer. Tokenization process be an iteration over each word in the source text and looking up for index corresponding for given words:
+Word level tokenization operates on whole words instead of single characters. This approach results in integer sequences of length equal to the number of words in source text. Naive approach to this would be to split source texts on whitespace character and create set of unique words found. Then we could create lookup table in which every word in set is mapped to integer. Tokenization process is an iteration over each word in the source text and look up for index corresponding for given word:
 
 ```python
 def create_vocabulary(text):
