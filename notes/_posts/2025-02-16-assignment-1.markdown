@@ -1,22 +1,34 @@
 ---
 layout: post
-title: "Assignment 1 - Byte Pair Encoder Training - IO considerations"
+title: "Assignment 1 - Byte Pair Encoder Training - p.1"
 date: 2025-02-16 20:00:00 +0100
 categories: assignment1
 author: jacek
 ---
 
-First assignment asks the student to implement and train BPE Tokenizer. Tokenization is process of transforming characters or words into indices, which then are processed further by Language Model. This is needed due to the fact that LLMs ultimately works on numbers and can't process raw text directly. There some way of converting raw strings to numbers is nedded and this process is called tokenization. There are three main approaches to the tokenization:
+First assignment asks the student to implement and train BPE Tokenizer. Tokenization is process of transforming characters or words into numbers (indices in some vocabulary or dictionary), which then are processed further by Language Model. This is needed due to the fact that LLMs ultimately works on numbers and can't process raw text directly. The process of converting raw text to numbers in the contexts of LLMs is called tokenization. There are three main approaches to the tokenization:
 
-- Character level tokenization - each character in vocabulary/alphabet is given it's own index
+- Character level tokenization - each character found in text is given it's own index
 - Word-level tokenization - with this approach each unique word in the corpus gets it's own index
-- Sub-word tokenization - it is kind of hybrid approach in which neither single characters nor whole words are mapped to an index
+- Sub-word tokenization - hybrid approach in which neither single characters nor whole words are mapped to an index
 
-Each approach has it's pros and cons. Main thing to consider is the is length of sequences produced by tokenization. This is crucial factor due to the fact that the Transformer-based LLMs operate on fixed-size context window. Another factor is the vocabulary size which has direct influence on the size of Embedding matrix. Here are examples for illustration.
+Each approach has it's pros and cons. One thing to consider is the is length of sequences produced by tokenization. This is crucial factor due to the fact that the Transformer-based LLMs operate on fixed-size context window. Another factor is the vocabulary size which has direct influence on the size of Embedding matrix.
+
+The term vocabulary refers to the source mapping of word units (characters, whole words or sub-word chunks), for example we could create vocabulary in the form of key-value store where key is letter and value is some integer:
+
+```python
+vocab = {'a': 1, 'b': 2, 'c': 4 } # and so on
+```
+
+in essence it is a lookup table for each character in the text:
+
+```python
+idx = vocab['a'] # idx == 1
+```
 
 #### Character level tokenization
 
-This method maps single characters in sequence to their own index. At the first look it seems resonable approach but there some details to consider. First of all - which alphabet/language to use? How to choose numbers for indices? There are defined standards like ASCII which are code mappings of latin characters and digits to 127 numbers (one-byte integers) used to represent individual characters in computer memory. 95 of 127 numbers are reserved for printable characters (a-zA-Z0-9 and puncuation and special characters). This means that when choosing ASCII as our base encoding we will end up with vocabulary size of 95. Which means that embedding matrix in language model will have 95 rows (one row for one index). In python we can use `ord()` function to get code assiciated with given character. For example letter 'a' is mapped to number 97:
+This method maps single characters in sequence to their own index. At the first look it seems resonable approach but there some details to consider. First of all - should we create our vocabulary only of the latin characters? How our arbitrary choice of numbers used for tokenization will impact final encoding? There are defined standards like ASCII which are code mappings of latin characters (a-zA-Z) and digits (0-9) to 127 numbers (one-byte integers). Those code mappings are used to represent letters and digits in computer memory. 95 of 127 numbers are reserved for printable characters which are visible on screen, rest are reserved for so-called control characters. This means that if we choose ASCII as our base encoding we will end up with vocabulary size of 95. Which means that embedding matrix in language model will have 95 rows (one row for one index). In python we can use `ord()` function to get ASCII code assiciated with given character. For example letter 'a' is mapped to number 97:
 
 ```python
 ord('a') #prints 97
@@ -70,13 +82,13 @@ ids = [vocab[word] for word in example_text.split(" ")]
 
 In above example vocabulary has 10 unique words and in the tokenized output we can see that index 5 appears twice - which corresponds to the word "text" in the source string.
 
-However this navie approach will not suffice to create proper vocabulary for production grade model. First of all, the vocabulary is limited to the words found in the source training data. It is impossible to tokenize word which didn't appear in the training data:
+However this navie approach will not suffice to create proper vocabulary for production grade model. The vocabulary is limited to the words found in the source training data. The bigger source training set the richer the vocabulary of the tokenizer but we cannot tokenize word not present in vocabulary:
 
 ```python
 vocab["Hello"] #KeyError: 'Hello'
 ```
 
-There are ways to handle out-of-vocabulary words, for example, by substituting unknown words with a special token like `<UNK>`. A second issue with this approach is that, currently, the same words written with different cases (e.g., "Text" and "text") will have different indices, despite meaning the same thing. One way to handle this problem is to preprocess and normalize the source text before tokenization, such as converting it all to lowercase. However, this would cause us to lose some information that is also encoded in the casing. To summarize word level tokenization:
+There are ways to handle out-of-vocabulary words, for example, by substituting unknown words with a special token like `<UNK>`. Second issue with this approach is that, currently, the same words written with different cases (e.g., "Text" and "text") will have different indices, despite meaning the same thing. One way to handle this problem is to preprocess and normalize the source text before tokenization, such as converting it all to lowercase. However, this would cause us to loose some information that is also encoded in the casing. To summarize word level tokenization:
 
 - Resulting sequences have length equal to the number of words in the source text.
 - Vocabulary is limited only to the words found in source text.
@@ -85,7 +97,7 @@ There are ways to handle out-of-vocabulary words, for example, by substituting u
 
 #### Sub-word Level tokenization
 
-This is a hybrid approach that tokenizes not single characters or whole words, but fragments of words.
+This is hybrid approach that tokenizes not single characters or whole words, but fragments of words. During training the statistical structure of text is built and used to create common pairs or chunks of words which commonly appear together. For example instead of tokenize each character of string `hello` and have resulting encoding of length 5 the tokenizer might figure out that sequences `he` and `llo` are very frequent in the text, and can treat them as whole units with their own index. Instead of encoding of lenght 5 we can end up with length of 2. This is form of compression. Sub-word level tokenization more complicated to create because we need to calculate common patters in the text and create mappings for them. This method is called Byte-pair encoding.
 
 ### Byte-pair encoding
 
