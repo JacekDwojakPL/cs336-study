@@ -18,9 +18,9 @@ class Transformer(nn.Module):
         self.residual_pdrop = residual_pdrop
         self.token_embedding = nn.Embedding(vocab_size, d_model)
         self.position_embedding = nn.Embedding(context_length, d_model)
-        self.blocks = nn.Sequential(*[Block(d_model, num_heads, d_ff, attn_prdop, residual_pdrop) for _ in range(num_layers)])
-        self.norm = RMSNorm(d_model)
-        self.lnProj = nn.Linear(d_model, vocab_size, bias=False)
+        self.layers = nn.Sequential(*[Block(d_model, num_heads, d_ff, attn_prdop, residual_pdrop) for _ in range(num_layers)])
+        self.ln_final = RMSNorm(d_model)
+        self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
         
     def forward(self, x):
         _, T = x.size()
@@ -28,9 +28,9 @@ class Transformer(nn.Module):
         position_embeddings = self.position_embedding(torch.arange(T, dtype=torch.long))
         embeddings = token_embeddings + position_embeddings
         embeddings = nn.functional.dropout(embeddings, self.residual_pdrop)
-        x = self.blocks(embeddings)
-        x = self.norm(x)
-        x = self.lnProj(x)
+        x = self.layers(embeddings)
+        x = self.ln_final(x)
+        x = self.lm_head(x)
         
         return x
     
@@ -47,6 +47,6 @@ class Transformer(nn.Module):
             weights["ln2.weight"] = state_dict[f"layers.{i}.ln2.weight"]
             weights["ffn.w1.weight"] = state_dict[f"layers.{i}.ffn.w1.weight"]
             weights["ffn.w2.weight"] = state_dict[f"layers.{i}.ffn.w2.weight"]
-            self.blocks[i].load_state_dict(weights)
-        self.norm.weights.data = state_dict["ln_final.weight"]
-        self.lnProj.weight.data = state_dict["lm_head.weight"]
+            self.layers[i].load_state_dict(weights)
+        self.ln_final.weights.data = state_dict["ln_final.weight"]
+        self.lm_head.weight.data = state_dict["lm_head.weight"]
