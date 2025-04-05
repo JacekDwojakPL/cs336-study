@@ -140,7 +140,7 @@ Assignment notes provides some hints about optimizations to speedup training tim
 
 ### Fitting dataset in memory
 
-But we cannot improve the alghoritm itself wihtout the training data. And first big factor to consider is the size of dataset and fact that it will not fit in the memory at once. When I was researching the subject of BPE I always found examples with whole dataset in the memory. The Karpaty's example is no exception. So first main thing is to find some way to read those large files and not fill the entire RAM.
+But we cannot improve the alghoritm itself without the training data. And first big factor to consider is the size of dataset and fact that it will not fit in the memory at once. When I was researching the subject of BPE I always found examples with whole dataset in the memory. The Karpaty's example is no exception. So first main thing is to find some way to read those large files and not fill the entire RAM.
 
 One thing that came to mind is to use some sort of paralleliation and spread reading across multiple processes. Rughly speaking - divide the dataset into chunks of given size, compute offests (start and end positions) of each chunk, distribute the chunks offsets across multiple threads so that each thread has it's own start position and perform the pre-tokenization on loaded chunk.
 But this approach can be problematic because of fact mentioned above - the unicode characters are often composed from sequences of bytes and we do not have guarantee that chunking will not cut some word in the middle. This will affect computation of most frequent pairs and merges.
