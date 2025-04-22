@@ -3,24 +3,24 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 
 class OwtDataset(Dataset):
-    def __init__(self, data, context_length, device):
+    def __init__(self, dataset, context_length, device):
         super(OwtDataset, self).__init__()
-        self.data = data
-        self.device = device
+        self.data = dataset
         self.context_length = context_length
-    
+        self.device = device
+
     def __len__(self):
         return len(self.data) - self.context_length
-    
-    def __getitem__(self, index):
-        x = self.data[index: index + self.context_length].astype(np.int64)
-        y = self.data[index+1:index+1+self.context_length].astype(np.int64)
-        
-        return (torch.tensor(x).to(self.device), torch.tensor(y).to(self.device))
-    
-    
-def get_batch(dataset, batch_size, context_length, device):
-    dataset = OwtDataset(dataset, context_length, device)
-    dataloader = DataLoader(dataset, batch_size, shuffle=True)
-    
-    return next(iter(dataloader))
+
+    def __getitem__(self, idx):
+        x = torch.tensor(self.data[idx:idx+self.context_length].astype(np.int64), device=self.device)
+        y = torch.tensor(self.data[idx+1:idx+1+self.context_length].astype(np.int64), device=self.device)
+
+        return (x, y)
+
+    def get_batch(self, batch_size):
+        indices = torch.randint(0, len(self), (batch_size,), device=self.device)
+        x = torch.stack([self[i][0].to(self.device) for i in indices])
+        y = torch.stack([self[i][1].to(self.device) for i in indices])
+
+        return (x, y)

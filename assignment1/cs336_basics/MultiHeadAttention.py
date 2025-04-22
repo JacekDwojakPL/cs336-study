@@ -14,13 +14,14 @@ class MultiHeadAttention(nn.Module):
         self.q_proj = nn.Linear(self.d_model, self.d_model, bias=False)
         self.v_proj = nn.Linear(self.d_model, self.d_model, bias=False)
         self.output_proj = nn.Linear(self.d_model, self.d_model, bias=False)
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         
     def forward(self, input_features):
         B, T, C = input_features.shape
         k = self.k_proj(input_features).view(B,T,self.num_heads, self.head_dim).transpose(1, 2)
         q = self.q_proj(input_features).view(B,T,self.num_heads, self.head_dim).transpose(1, 2)
         v = self.v_proj(input_features).view(B,T,self.num_heads, self.head_dim).transpose(1, 2)
-        mask = torch.triu(torch.ones((T, T)), diagonal=1).bool()
+        mask = torch.triu(torch.ones((T, T), device=self.device), diagonal=1).bool()
         attention = scaled_dot_product_attention(k, q, v, mask=mask, pdrop=self.pdrop)
         attention = attention.transpose(1, 2).contiguous().view(B, T, C)
         ret = self.output_proj(attention)

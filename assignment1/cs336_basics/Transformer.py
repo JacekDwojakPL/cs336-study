@@ -21,11 +21,12 @@ class Transformer(nn.Module):
         self.layers = nn.Sequential(*[Block(d_model, num_heads, d_ff, attn_prdop, residual_pdrop) for _ in range(num_layers)])
         self.ln_final = RMSNorm(d_model)
         self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         
     def forward(self, x):
         _, T = x.size()
         token_embeddings = self.token_embedding(x)
-        position_embeddings = self.position_embedding(torch.arange(T, dtype=torch.long))
+        position_embeddings = self.position_embedding(torch.arange(T, device=self.device))
         embeddings = token_embeddings + position_embeddings
         embeddings = nn.functional.dropout(embeddings, self.residual_pdrop)
         x = self.layers(embeddings)
