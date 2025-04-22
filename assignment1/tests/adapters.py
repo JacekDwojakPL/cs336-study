@@ -18,7 +18,7 @@ from cs336_basics.Block import Block
 from cs336_basics.Transformer import Transformer
 from cs336_basics.Crossentropy import crossentropy
 from cs336_basics.AdamW import AdamW
-from cs336_basics.OwtDataset import get_batch
+from cs336_basics.OwtDataset import OwtDataset
 from cs336_basics.utils import save_checkpoint, load_checkpoint, lr_schedule, gradient_clipping
 
 def run_positionwise_feedforward(
@@ -400,7 +400,8 @@ def run_get_batch(
         is the sampled input sequences, and the second tuple item is the corresponding
         language modeling labels.
     """
-    return get_batch(dataset, batch_size, context_length, device)
+    dataset = OwtDataset(dataset, context_length, device)
+    return dataset.get_batch(batch_size)
 
 
 def run_softmax(in_features: torch.FloatTensor, dim: int) -> torch.FloatTensor:
