@@ -3,7 +3,7 @@ import torch
 class AdamW(torch.optim.Optimizer):
     def __init__(self, params, lr=1e-3, weight_decay=0.01, betas=(0.9, 0.999), eps=1e-8):
         super(AdamW, self).__init__(params, {"lr": lr, "weight_decay": weight_decay, "betas": betas, "eps": eps})
-        
+         
     def step(self, closure = None):
         loss = None if closure is None else closure()
         
@@ -28,7 +28,9 @@ class AdamW(torch.optim.Optimizer):
                 state["m"] = m
                 state["v"] = v
                 state["t"] = t+1
-                
-        
-        
+                        
         return loss
+    
+    def set_lr(self, lr):
+        for param_group in self.param_groups:
+            param_group['lr'] = lr
