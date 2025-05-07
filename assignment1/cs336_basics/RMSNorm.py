@@ -6,13 +6,13 @@ class RMSNorm(nn.Module):
         super(RMSNorm, self).__init__()
         self.d_model = d_model
         self.eps = eps
-        self.weights = nn.Parameter(torch.ones(d_model))
+        self.weight = nn.Parameter(torch.ones(d_model))
         
     def forward(self, x):
         mean = torch.sqrt(torch.mean(x**2, dim=-1, keepdim=True)+self.eps)
         x = x / mean
-        x = x*self.weights
+        x = x*self.weight
         return x
     
     def load_state_dict(self, state_dict):
-        self.weights.data = state_dict["weight"]
+        self.weight.data = state_dict["weight"]

@@ -26,11 +26,11 @@ class Block(nn.Module):
         return x
     
     def load_state_dict(self, state_dict):
-        self.ln1.weights.data = state_dict["ln1.weight"]
+        self.ln1.weight.data = state_dict["ln1.weight"]
         self.attn.k_proj.weight.data = state_dict["attn.k_proj.weight"]
         self.attn.q_proj.weight.data = state_dict["attn.q_proj.weight"]
         self.attn.v_proj.weight.data = state_dict["attn.v_proj.weight"]
         self.attn.output_proj.weight.data = state_dict["attn.output_proj.weight"]
-        self.ln2.weights.data = state_dict["ln2.weight"]
+        self.ln2.weight.data = state_dict["ln2.weight"]
         self.ffn.w1.weight.data = state_dict["ffn.w1.weight"]
         self.ffn.w2.weight.data = state_dict["ffn.w2.weight"]

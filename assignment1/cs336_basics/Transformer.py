@@ -16,8 +16,8 @@ class Transformer(nn.Module):
         self.d_ff = d_ff
         self.attn_pdorp = attn_prdop
         self.residual_pdrop = residual_pdrop
-        self.token_embedding = nn.Embedding(vocab_size, d_model)
-        self.position_embedding = nn.Embedding(context_length, d_model)
+        self.token_embeddings = nn.Embedding(vocab_size, d_model)
+        self.position_embeddings = nn.Embedding(context_length, d_model)
         self.layers = nn.Sequential(*[Block(d_model, num_heads, d_ff, attn_prdop, residual_pdrop) for _ in range(num_layers)])
         self.ln_final = RMSNorm(d_model)
         self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
@@ -25,8 +25,8 @@ class Transformer(nn.Module):
         
     def forward(self, x):
         _, T = x.size()
-        token_embeddings = self.token_embedding(x)
-        position_embeddings = self.position_embedding(torch.arange(T, device=self.device))
+        token_embeddings = self.token_embeddings(x)
+        position_embeddings = self.position_embeddings(torch.arange(T, device=self.device))
         embeddings = token_embeddings + position_embeddings
         embeddings = nn.functional.dropout(embeddings, self.residual_pdrop)
         x = self.layers(embeddings)
@@ -36,8 +36,8 @@ class Transformer(nn.Module):
         return x
     
     def load_state_dict(self, state_dict):
-        self.token_embedding.weight.data = state_dict["token_embeddings.weight"]
-        self.position_embedding.weight.data = state_dict["position_embeddings.weight"]
+        self.token_embeddings.weight.data = state_dict["token_embeddings.weight"]
+        self.position_embeddings.weight.data = state_dict["position_embeddings.weight"]
         for i in range(self.num_layers):
             weights = OrderedDict()
             weights["ln1.weight"] = state_dict[f"layers.{i}.ln1.weight"]
@@ -49,5 +49,5 @@ class Transformer(nn.Module):
             weights["ffn.w1.weight"] = state_dict[f"layers.{i}.ffn.w1.weight"]
             weights["ffn.w2.weight"] = state_dict[f"layers.{i}.ffn.w2.weight"]
             self.layers[i].load_state_dict(weights)
-        self.ln_final.weights.data = state_dict["ln_final.weight"]
+        self.ln_final.weight.data = state_dict["ln_final.weight"]
         self.lm_head.weight.data = state_dict["lm_head.weight"]
